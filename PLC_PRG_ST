@@ -1,3 +1,36 @@
+PROGRAM PLC_PRG
+VAR
+	// inputs
+	button_start	:	BOOL;
+	button_stop		:	BOOL;
+	
+	button_emergency_ok	:	BOOL;
+	button_safety_barriers_closed	:	BOOL;
+	
+	button_low_velocity	:	BOOL;
+	button_high_velocity	: BOOL;
+	
+	// The velocity can be previosly set up or it can come from an HMI
+	magnitude_HMI_velocity: INT := 0; // from 0 to 50
+	magnitude_low_velocity	: INT := 200;
+	magnitude_high_velocity : INT := 1000; 
+	
+	// Internal: it does not come from outside the PLC
+	status_machine_ready: BOOL;
+	timer_startup_machine: TON;
+	time_machine_start: TIME := T#2S;
+	
+	piece_production_time: TIME := T#1S;
+	blink_piece_production: Blink;	
+	pieces_counter: CTU;
+	pieces_amount: WORD;  
+		
+	// outputs
+	status_machine_running	: BOOL;
+	machine_velocity	: INT;
+	magnitude_min_velocity : INT := 0;
+END_VAR
+
 // Initialization Procedure
 IF NOT status_machine_ready THEN
 	IF magnitude_HMI_velocity<>0 THEN
