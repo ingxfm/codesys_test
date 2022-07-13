@@ -1,0 +1,44 @@
+// Initialization Procedure
+IF NOT status_machine_ready THEN
+	IF magnitude_HMI_velocity<>0 THEN
+		machine_velocity := magnitude_HMI_velocity;
+		status_machine_ready := TRUE;
+	ELSE
+		RETURN;
+	END_IF
+END_IF
+
+// Machine Activation Conditions
+timer_startup_machine(
+	IN:= button_emergency_ok AND button_safety_barriers_closed AND button_start AND NOT button_stop AND machine_velocity <> 0, 
+	PT:= time_machine_start, 
+	Q=> , 
+	ET=> ); //time delay of 2 seconds
+
+IF timer_startup_machine.Q THEN	
+	status_machine_running := TRUE;  //execute status_machine_running	
+// Machine Deactivation Conditions
+ELSIF button_stop OR NOT button_emergency_ok OR NOT button_safety_barriers_closed THEN
+	status_machine_running := FALSE;
+END_IF
+
+//Velocity Button Management
+IF button_low_velocity AND NOT button_high_velocity THEN
+	machine_velocity := magnitude_low_velocity;
+ELSIF button_high_velocity AND NOT button_low_velocity THEN
+	machine_velocity := magnitude_high_velocity;	
+END_IF
+
+//Piece Counting
+blink_piece_production(
+	ENABLE:= status_machine_running, 
+	TIMELOW:= piece_production_time/2, 
+	TIMEHIGH:= piece_production_time/2, 
+	OUT=> );
+
+pieces_counter(
+	CU:= blink_piece_production.OUT, 
+	RESET:= NOT status_machine_running, 
+	PV:= 0, 
+	Q=> , 
+	CV=> pieces_amount);
